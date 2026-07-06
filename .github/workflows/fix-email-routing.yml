@@ -1,0 +1,53 @@
+name: Fix Cloudflare Email Routing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      DOMAIN: yogurts.top
+      WORKER_NAME: ${{ secrets.NAME || vars.NAME || 'cloud-mail' }}
+
+    steps:
+      - name: Check required secrets
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: Route admin address to Worker
+        run: |
+          npx wrangler@latest email routing rules update "$DOMAIN" 2765ee73502244e89fa6545b7a7f30a0 \
+            --name "cloud-mail admin" \
+            --enabled true \
+            --match-type literal \
+            --match-field to \
+            --match-value "admin@$DOMAIN" \
+            --action-type worker \
+            --action-value "$WORKER_NAME" \
+            --priority 0
+
+      - name: Route yogurt address to Worker
+        run: |
+          npx wrangler@latest email routing rules update "$DOMAIN" a9f0e6a896f3465098adbb6733bbfec8 \
+            --name "cloud-mail yogurt" \
+            --enabled true \
+            --match-type literal \
+            --match-field to \
+            --match-value "yogurt@$DOMAIN" \
+            --action-type worker \
+            --action-value "$WORKER_NAME" \
+            --priority 0
+
+      - name: Route catch-all to Worker
+        run: |
+          npx wrangler@latest email routing rules update "$DOMAIN" catch-all \
+            --enabled true \
+            --action-type worker \
+            --action-value "$WORKER_NAME"
+
+      - name: List Email Routing rules
+        run: npx wrangler@latest email routing rules list "$DOMAIN"

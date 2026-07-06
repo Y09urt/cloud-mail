@@ -18,10 +18,12 @@ jobs:
           test -n "$CLOUDFLARE_ACCOUNT_ID"
 
       - name: Show existing Email Sending domains
+        continue-on-error: true
         run: npx wrangler@latest email sending list
 
       - name: Enable Email Sending for domain
         run: npx wrangler@latest email sending enable "$DOMAIN"
 
       - name: Show Email Sending DNS records
+        continue-on-error: true
         run: npx wrangler@latest email sending dns get "$DOMAIN"

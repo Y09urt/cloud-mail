@@ -1,0 +1,33 @@
+name: Check Cloudflare Email Routing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      DOMAIN: yogurts.top
+
+    steps:
+      - name: Check required secrets
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+
+      - name: List Email Routing zones
+        run: npx wrangler@latest email routing list
+
+      - name: Show Email Routing settings
+        run: npx wrangler@latest email routing settings "$DOMAIN"
+
+      - name: Show Email Routing DNS records
+        run: npx wrangler@latest email routing dns get "$DOMAIN"
+
+      - name: List Email Routing rules
+        run: npx wrangler@latest email routing rules list "$DOMAIN"
+
+      - name: Show catch-all rule
+        run: npx wrangler@latest email routing rules get "$DOMAIN" catch-all
